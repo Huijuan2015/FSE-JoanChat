@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>SSNoC</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="/socket.io/socket.io.js"></script> 
+  <script src="/js/jquery-2.1.4.min.js"></script>
+  <script src="/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+ <style>
+  .table {
+    font-size: 12px;
+    line-height: 1;
+  }
+  .status {
+    font-weight: bold;
+    font-size: 20px;
+  }
+  </style>
+</head>
+<body>
+<%- include partials/navbar_partial %>
+  
+<div class="container" style="margin-top: 40px">
+<div class="jumbotron well">
+
+<h4>Welcome <span><%=username%>!</span></h4>  
+<p><small>Share your status to alert your current condition. Default Status messages and their meanings are described below.<small></p>
+<div class ="well" id="statusmsg" style="display:none;">
+</div>
+<h4>Select your current status:</h4>
+<div class="list-group">
+  <div class="status">
+    <a href="#" class="list-group-item" id="OK"><span class ="xicon glyphicon glyphicon-ok-sign" style="color:green;"></span>I am OK, I do not need help</a>
+  </div>
+  <div class="status">
+    <a href="#" class="list-group-item" id="HELP"><span class ="xicon glyphicon glyphicon-exclamation-sign" style="color:#FFD700;"></span>I need help but it is not life threatening</a>
+  </div>
+  <div class="status">
+    <a href="#" class="list-group-item" id="SOS"><span class ="xicon glyphicon glyphicon-plus-sign" style="color:red;"></span>Help me this is an emergency!</a>
+  </div>
+</div>
+</div>
+
+  
+
+</div>
+</body>
+<script src="/js/client.js"></script>
+<script src="/js/welcomepage.js"></script>
+</html>

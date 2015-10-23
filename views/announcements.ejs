@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>SSNoC</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="/socket.io/socket.io.js"></script> 
+  <script src="/js/jquery-2.1.4.min.js"></script>
+  <script src="/jsclient.js"></script>
+  <script src="/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+
+ <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+  <style>   
+  html,body {
+    height: 100%;
+  }
+   .wrap {
+          margin-top: 80px;
+          margin-bottom: 10px;
+          height: 300px;  
+          overflow-y: auto;
+          background-color:#f5f5f5;
+    }
+    .push, .footer {
+      height: 40px;
+    }
+    .footer {
+      
+    }
+    
+  </style>
+</head>
+<body>
+
+<%- include partials/navbar_partial %>
+
+<div class="container">
+<div class="wrap well">
+    <div id="messages">
+    </div> 
+    <div class="push"> 
+    </div>  
+  </div>  
+</div>
+
+<div class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="form-group">
+        <div class="col-xs-8 col-sm-9">
+          <input type="text" class="form-control input-lg" rows="3" id="msgbox" name="msgbox">
+        </div>
+        <div class="col-xs-4 col-sm-2">
+          <button type="submit" id="postmsg" class="form-control btn btn-info" disabled="true">Post</button>
+        </div>
+      </div>
+      </div>  
+    </div>
+  </div>
+</div>  
+
+</body>
+<script src="/js/announcements.js"></script>
+</html>
+
