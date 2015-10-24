@@ -249,10 +249,10 @@ io.on("connection", function (client) {
      var message = msgInfo.message;
      var datetime = msgInfo.datetime;
      var receiver = msgInfo.receiver;
-     if (receiver === "All") {
+     //if (receiver === "All") {
      client.broadcast.emit("messages", {username:username, message: message, datetime: datetime, receiver:"All"});
-     }else{client.emit("messages", {username:username, message: message, datetime: datetime, receiver:receiver});
-}
+     //}else{client.emit("messages", {username:username, message: message, datetime: datetime, receiver:receiver});
+//}
 
      }
      }

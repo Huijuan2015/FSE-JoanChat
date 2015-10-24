@@ -25,7 +25,7 @@ var allUsers = [];
 //Ping Method:
 app.get("/ping/:val", function(req, res)
 {
-	res.send("Rest services are up and running... Returning sent value: " + req.params.val);
+  res.send("Rest services are up and running... Returning sent value: " + req.params.val);
 });
 
 
@@ -50,7 +50,7 @@ app.get("/user/logout/:username", function(req, res)
 
   var sentUsername = req.params.username;
 
-	userModel.logout(sentUsername, function(err, logoutInfo)
+  userModel.logout(sentUsername, function(err, logoutInfo)
   {
     console.log("returned status: " + logoutInfo.status);
 

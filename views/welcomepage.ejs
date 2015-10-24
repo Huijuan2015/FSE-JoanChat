@@ -23,8 +23,14 @@
 <%- include partials/navbar_partial %>
   
 <div class="container" style="margin-top: 40px">
-<div class="jumbotron well">
+<!--搜索框-->
+<center><div class="input-append">
+    <input type="text" class="span2 search-query">
+        <button type="submit" class="btn" style="color: #fff; background-color:#5bc0de">Search</button></center>
+</div>
+<!--搜索框-->
 
+<div class="jumbotron well">
 <h4>Welcome <span><%=username%>!</span></h4>  
 <p><small>Share your status to alert your current condition. Default Status messages and their meanings are described below.<small></p>
 <div class ="well" id="statusmsg" style="display:none;">
