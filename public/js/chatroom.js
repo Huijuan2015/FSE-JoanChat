@@ -5,29 +5,39 @@ $('document').ready(function () {
     console.log(url);
     var socket = io.connect(url);
     var curLoginUser = $('#user').text();       //login user
+    console.log("curLoginUser........."+curLoginUser);
+
     var curTalkingTo = $('#talkingTo').text();   //receiver of msg
 //receive
+
+    console.log("curTalkingTo......."+curTalkingTo);
     socket.on("messages", function (data) {
+
         console.log("socket on messages......");
         var username = data.username;
         var message = data.message;
         var datetime = data.datetime;
         var receiver = data.receiver;
+        if(receiver==="All"){
+            $('#chatroomalert').show();
+        }else{
+            $('#privatealert').show();
+            $('#'+receiver+'alert').show();
 
+        }
+        console.log(username+message+receiver);
         if (receiver === "All") {
-            if (curTalkingTo === "All") {
-                renderHTML(data.username, data.message, data.datetime);
-            } else {
-                ;
+            console.log("receiver====All.....")
+            renderHTML(username, data.message, data.datetime,receiver);
             }
             //TODO  存到消息提醒
-        } else if (receiver === curLoginUser) {
-            if (username === curTalkingTo) {
-                renderHTML(data.username, data.message, data.datetime, data.receiver);
-            } else {
+        else  {
+                console.log("receiver....."+receiver);
+                renderHTML(username, data.message, data.datetime, receiver);
+
                 //TODO  存到消息提醒
             }
-        }
+
     });
 
     socket.on("announcements", function (data) {
@@ -36,34 +46,36 @@ $('document').ready(function () {
 
     });
 
-    function renderHTML(username, message, datetime) {
-        $('#messages').append('<div class="well"><p class = "pull-left"><b>' + username + '</b></p><p class="dateTimeFormat pull-right"><b>' + datetime + '</b></p><br><div class="clearfix"></div><p>' + message + '</p></div>');
+    function renderHTML(username, message, datetime,receiver) {
+        $('#messages'+receiver).append('<div class="well"><p class = "pull-left"><b>' + username + '</b></p><p class="dateTimeFormat pull-right"><b>' + datetime + '</b></p><br><div class="clearfix"></div><p>' + message + '</p></div>');
         var scroller = $('.wrap');
         scroller.scrollTop(scroller.get(0).scrollHeight);
     }
 
     //send msg
-    function sendMessage() {
-        console.log("entered send");
-        var message = $('#msgbox').val();
+    function sendMessage(receiver) {
+
+        console.log("entered send...."+receiver );
+        var message = $('#msgbox'+receiver).val();
         var currentDateTime = new Date();
         var datetime = getTimer(currentDateTime);
         var username = $('#user').text();
-        var receiver = $('#talkingTo').text();
+        //var receiver = $('#talkingTo'+receiver).text();
         console.log("datetime--: " + datetime);
-        console.log("username1--: " + username);
+        console.log("username--: " + username);
         console.log("receiver --:" + receiver);
-
-        renderHTML(username, message, datetime);
+        //$('#'+id).parent();
+        //console.log("$('#<%=id%>').parent();....."+$('#'+id).parent());
+        renderHTML(username, message, datetime,receiver);
         socket.emit("messages", {username: username, message: message, datetime: datetime, receiver: receiver});
-        $('#msgbox').val('');
-        $('#postmsg').attr("disabled", "true");
+        $('#msgbox'+receiver).val('');
+       // $('#postmsg').attr("disabled", "true");
     }
 
-    function outgoingMessageKeyChange() {
+   /* function outgoingMessageKeyChange() {
         var outgoingMessageValue = $('#msgbox').val();
         $('#postmsg').attr('disabled', (outgoingMessageValue.trim()).length > 0 ? false : true);
-    }
+    }*/
 
     function getTimer() {
         var date = new Date();
@@ -77,8 +89,24 @@ $('document').ready(function () {
         console.log("fullDate: " + fullDate);
         return fullDate;
     }
+    //$('#msgbox').on('keyup keydown', outgoingMessageKeyChange);
+    $("button[id^='postmsg']").on('click', function(){
+        console.log("click......");
+        var id =$(this).attr('id');
+        console.log("post button id ...."+id);
+        var username = $('#user').text();
+        var message =$('#'+id).parent().parent().children('div').children('input').val();
+
+        var divid = $('#'+id).parent().parent().closest("div[class='footer']").parent().attr('id');
+        var receiver = $('#'+divid+' div:first div:first ul:first').text();
+        //var datetime = getTimer(new Date());
+        //$('#'+divid+' div:first div:first div:first').append('<div class="well"><p class = "pull-left"><b>' + username + '</b></p><p class="dateTimeFormat pull-right"><b>' + datetime + '</b></p><br><div class="clearfix"></div><p>' + message + '</p></div>');
+        sendMessage(receiver);
+       // var scroller = $('.wrap');
+       // scroller.scrollTop(scroller.get(0).scrollHeight);
+       // socket.emit("messages", {username: username, message: message, datetime: datetime, receiver: receiver});
+       // $('#'+id).parent().parent().children('div').children('input').val('');
+    });
 
 
-    $('#msgbox').on('keyup keydown', outgoingMessageKeyChange);
-    $('#postmsg').on('click', sendMessage);
 });

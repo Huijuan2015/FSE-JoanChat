@@ -9,8 +9,10 @@ function Message(username, message, datetime, receiver)
     message : message,
     datetime  : datetime,
     receiver : receiver
-  };
-}
+  
+     };
+  }
+
 // Message.storeMessage = function (username, message, datetime, callback)
 // {
 // 	  db.serialize(function() 
@@ -49,7 +51,7 @@ Message.getMsgs = function(messageType, callback)
   var query;
 
   if(messageType === 'publicmsg')
-  	query = "SELECT USERNAME, MESSAGE, DATETIME FROM USERPUBLICMESSAGEHISTORY";
+  	query = "SELECT USERNAME, MESSAGE, DATETIME FROM USERPUBLICMESSAGEHISTORY limit 50";
   else if(messageType === 'announcement')
   	query = "SELECT USERNAME, MESSAGE, DATETIME FROM USERANNOUNCEMENTHISTORY";
   
@@ -65,7 +67,8 @@ Message.getMsgs = function(messageType, callback)
         msgInfo.datetime = row.DATETIME;
       
         console.log("row name: "+ row.USERNAME+"message: "+ row.MESSAGE);
-        msgList.push(msgInfo);
+        //msgList.push(msgInfo);
+
       });
 
       callback(null, msgList);
@@ -77,7 +80,7 @@ Message.getMsgs = function(messageType, callback)
 };
 
 
-/*Message.getPrivateMsgs = function(messageType, callback)
+Message.getPrivateMsgs = function(messageType, callback)
 {
   var msgList = [];
   console.log("Getting " + messageType + "s list...");
@@ -98,8 +101,8 @@ Message.getMsgs = function(messageType, callback)
         msgInfo.receiver = row.RECEIVERUSERNAME;
         msgInfo.message = row.MESSAGE;
         msgInfo.datetime = row.DATETIME;
-        
-        console.log("row name: "+ row.SENDERUSERNAME+"message: "+ row.MESSAGE);
+        //SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME
+        console.log("row name: "+ row.SENDERUSERNAME+"message: "+ row.MESSAGE+"receiver: "+row.RECEIVERUSERNAME+"datetime:"+row.DATETIME);
         msgList.push(msgInfo);
       });
 
@@ -110,7 +113,7 @@ Message.getMsgs = function(messageType, callback)
   });
   msgList = [];
 };
-*/
+
 
 Message.saveAllMsg = function(messageType, username, message, datetime, callback)
 {
@@ -155,7 +158,7 @@ Message.savePrivateMsg = function(messageType, username, receiver, message, date
 
       stmt = db.prepare(statement);
 
-      stmt.run(null, username, message, datetime);
+      stmt.run(null, username,receiver, message, datetime);
       stmt.finalize();
               console.log("serializing end " + message);
 

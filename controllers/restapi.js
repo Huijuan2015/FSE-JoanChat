@@ -148,12 +148,25 @@ app.post("/message/announcement/:username", function(req, res)
 {
   console.log("Calling statuses REST method...");
 
-  msgModel.saveMsg("announcement", req.params.username, req.body.message, req.body.datetime, function(err, status) 
+  msgModel.saveAllMsg("announcement", req.params.username, req.body.message, req.body.datetime, function(err, status) 
   {
     if (err)
       res.sendStatus(500);
     else
       res.sendStatus(status);    
+  });
+});
+//Send a chat message to another user
+app.post("/message/:username/:receiver", function(req, res)
+{
+  console.log("Calling private chat REST method...");
+
+  msgModel.savePrivateMsg("privatemsg", req.params.username, req.params.receiver, req.body.message, req.body.datetime, function(err, status) 
+  {
+    if (err)
+      res.sendStatus(500);
+    else
+      res.sendStatus(JSON.stringify(msgList));    
   });
 });
 

@@ -2,13 +2,13 @@ var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('../controllers/SSNOC.DB');
 var bCrypt = require('bcrypt-nodejs');
 
-function User(username, password,isAdmin)
+function User(username, password, fullName, isAdmin)
 {
   this.local =
   {
     username : username,
     password : password,
-    //fullName  : fullName,
+    fullName  : fullName,
     //location : location,
     isAdmin : isAdmin
   };
@@ -50,7 +50,7 @@ User.getSingleUser = function(sentUsername, callback)
   });
 }
 
-User.logout = function(sentUsername, callback)
+User.logout = function(sentUsername,logoutat, callback)
 {
   console.log("Checking if the user is logged in---: " + sentUsername);
 
@@ -70,7 +70,7 @@ User.logout = function(sentUsername, callback)
             logoutInfo.pagename = "login";
             logoutInfo.pagemsg = "Thank you for visiting. Stay safe!";
             logoutInfo.status = 200;//RESTful
-            db.run("UPDATE USER SET ISONLINE = ? WHERE USERNAME = ?", [0, sentUsername]);
+            db.run("UPDATE USER SET ISONLINE = ? , LASTLOGOUTAT = ? WHERE USERNAME = ?", [0,logoutat, sentUsername]);
           }
           else if(isOnline === 0)
           {

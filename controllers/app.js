@@ -1,6 +1,7 @@
 /* ------------------------------------*
  *          include libraries 
  * ------------------------------------*/
+
 var express = require('express');
 var bodyParser = require('body-parser');
 var bCrypt = require('bcrypt-nodejs');
@@ -18,48 +19,35 @@ var maindir = "../";
 var userModel = require(maindir + "/models/User");
 var msgModel = require(maindir + "/models/Message");
 
-//----@Joan
-//problem in sending receiver
-
-app.param('receiver', function (req, res, next, value) {
-
-    // try to get the user details from the User model and attach it to the request object
-    console.log("receiver for private chat: " + value);
-    req.receiver = value;
-    next();
-
-});
-
-//@Joan----
-
 app.set('port', process.env.PORT || 8888);
 app.set('views', maindir + '/views');
 app.set('view engine', 'ejs');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(session({secret: 'ssshhh', resave: true, saveUninitialized: true}));
-
-//partials
-app.use(partials());
+app.use(partials());//partials
 
 var server = require('http').createServer(app);
 app.use(express.static(maindir + '/public'));
 var io = require('socket.io').listen(server);
 
-//app.use('/scripts', express.static(__dirname + '/node_modules/bootstrap/dist/'));
 
-//reset all users to offline if server crashes
-/*userModel.resetUserstatus(function(err, status)
- {
- if(err)
- {
- res.sendStatus(500);
- }
+/* ------------------------------------*
+ *          sending receiver 
+ * ------------------------------------*/
 
- });
- //db.run('UPDATE USER SET ISONLINE = 0');//gkishore: set all users to offline when node server stops
+app.param('receiver', function (req, res, next, value) {
 
- */
+    // try to get the user details from the User model and attach it to the request object
+    console.log("receiver for private chat is: ..." + value);
+    req.receiver = value;
+    next();
+
+});
+
+/* ------------------------------------*
+ *          Login site 
+ * ------------------------------------*/
 
 app.get('/index', function (req, res) {
     console.log("calling index - GET");
@@ -72,6 +60,10 @@ app.get('/', function (req, res) {
 
 });
 
+/* ------------------------------------*
+ *             POST Login 
+ * ------------------------------------*/
+
 app.post('/login', function (req, res) {
     console.log("calling login - POST");
     userModel.login(req.body.username, req.body.password, req.body.lastloginat, function (err, loginInfo) {
@@ -83,12 +75,16 @@ app.post('/login', function (req, res) {
 
         else if (pagename === "welcomepage") {
             req.session.username = req.body.username;
-            res.render(maindir + '/views/welcomepage', {username: req.body.username});
+            res.redirect('/mainpage?'+'username='+ req.body.username);
         }
         if (err)
             res.sendStatus(500);
     });
 });
+
+/* ------------------------------------*
+ *          POST Sign up 
+ * ------------------------------------*/
 
 app.post('/signup', function (req, res) {
     console.log("calling signup - POST");
@@ -104,12 +100,15 @@ app.post('/signup', function (req, res) {
 
         else if (pagename === "welcomepage") {
             req.session.username = req.body.username;
-            res.render(maindir + '/views/welcomepage', {username: req.body.username});
-        }
+            res.redirect('/mainpage?'+'username='+ req.body.username); }
         if (err)
             res.sendStatus(500);
     });
 });
+
+/* ------------------------------------*
+ *          POST Status
+ * ------------------------------------*/
 
 app.post('/status', function (req, res) {
     console.log("Got status [" + req.body.status + "] from [" + req.session.username + "] at [" + req.body.updatedat + "]");
@@ -130,7 +129,11 @@ app.post('/status', function (req, res) {
 
 });
 
-app.get('/directory', function (req, res)//gkishore: code for directory
+/* ------------------------------------*
+ *          GET directory 
+ * ------------------------------------*/
+
+app.get('/directory', function (req, res)
 {
 
     if (req.session.username !== undefined) {
@@ -150,8 +153,10 @@ app.get('/directory', function (req, res)//gkishore: code for directory
 
 });
 
+/* ------------------------------------*
+ *   GET chatroom - public & private 
+ * ------------------------------------*/
 
-//public
 app.get('/chatroom', function (req, res) {
 
     if (req.session.username !== undefined) {
@@ -169,12 +174,11 @@ app.get('/chatroom', function (req, res) {
 
 });
 
+/* ------------------------------------*
+ *         GET announcements 
+ * ------------------------------------*/
 
-
-
-//@Joan----
-
-app.get('/announcements', function (req, res)//gkishore: code for announcements
+app.get('/announcements', function (req, res)
 {
 
     if (req.session.username !== undefined) {
@@ -187,7 +191,11 @@ app.get('/announcements', function (req, res)//gkishore: code for announcements
 
 });
 
-app.get('/welcomepage', function (req, res)//gkishore: code for accessing home page from nav bar
+/* ------------------------------------*
+ *      GET welcome page & nav bar
+ * ------------------------------------*/
+
+app.get('/welcomepage', function (req, res)
 {
 
     if (req.session.username !== undefined) {
@@ -200,10 +208,40 @@ app.get('/welcomepage', function (req, res)//gkishore: code for accessing home p
 
 });
 
+/* ------------------------------------*
+ *       GET mainpage
+ * ------------------------------------*/
+
+app.get('/mainpage', function (req, res)//gkishore: code for accessing home page from nav bar
+{
+
+        if (req.session.username !== undefined) {
+            userModel.getAllUsers(function (err, userList) {
+                if (err) {
+                    res.sendStatus(500);
+                }
+                else {
+                    res.render('mainpage', {username: req.session.username, receiver: "All",userList: userList});
+                }
+
+            });
+
+        }
+    else {
+        res.render('login', {pagemsg: 'Please login!'});
+    }
+
+});
+
+/* ------------------------------------*
+ *           GET log out
+ * ------------------------------------*/
 
 app.get('/logout', function (req, res)// gkishore: app.post changed to app.get
 {
-    userModel.logout(req.session.username, function (err, logoutInfo) {
+    var logoutat = getTimer(new Date());
+    console.log("logout.........."+logoutat);
+    userModel.logout(req.session.username,logoutat, function (err, logoutInfo) {
         var pagename = logoutInfo.pagename;
         var pagemsg = logoutInfo.pagemsg;
 
@@ -225,113 +263,132 @@ app.get('/logout', function (req, res)// gkishore: app.post changed to app.get
     });
 });
 
-//@Joan----
-//Chat Publicly code
-//problem part of users definition
+/* ------------------------------------*
+ *             get timer
+ * ------------------------------------*/
+
+function getTimer()
+{
+    var date = new Date();
+    var hr = date.getHours();
+    var min = date.getMinutes();
+    var sec = date.getSeconds();
+    var day= (date.getDate()).toString();
+    var month = (date.getMonth()+1).toString();
+    var year = (date.getFullYear()).toString();
+    var fullDate = year+'-'+month+'-'+day+' '+hr+':'+min;
+    console.log("fullDate: " +fullDate);
+    return fullDate;
+}
+
+/* ------------------------------------*
+ *          receive Msg
+ * ------------------------------------*/
 
 io.on("connection", function (client) {
-    console.log("on connection 1234...");
+    console.log("on connection ...");
 
-    //Getting all public msgs
-     msgModel.getMsgs("publicmsg", function (err, msgList)
-     {
-     if(err)
-     {
-     res.sendStatus(500);
-     }
-     else //if(receiver === "All")       //receiver undified?
-     {
-     for(var i=0; i<msgList.length; i++)
-     {
-     var msgInfo = msgList[i];
+/* ------------------------------------*
+ *          get all public Msg
+ * ------------------------------------*/
 
-     var username = msgInfo.username;
-     var message = msgInfo.message;
-     var datetime = msgInfo.datetime;
-     var receiver = msgInfo.receiver;
-     //if (receiver === "All") {
-     client.broadcast.emit("messages", {username:username, message: message, datetime: datetime, receiver:"All"});
-     //}else{client.emit("messages", {username:username, message: message, datetime: datetime, receiver:receiver});
-//}
+    msgModel.getMsgs("publicmsg", function (err, msgList) {
+        if (err) {
+            res.sendStatus(500);
+        }
+        else
+        {
+            for (var i = 0; i < msgList.length; i++) {
+                var msgInfo = msgList[i];
 
-     }
-     }
-     });
+                var username = msgInfo.username;
+                var message = msgInfo.message;
+                var datetime = msgInfo.datetime;
+                client.emit("messages", {username: username, message: message, datetime: datetime, receiver: "All"});
+            }
+        }
+    });
 
-//Getting  private msgs
-    /* msgModel.getPrivateMsgs("privatemsg", function (err, msgList)
-     {
-     if(err)
-     {
-     res.sendStatus(500);
-     }
-     else
-     {
-     for(var i=0; i<msgList.length; i++)
-     {
-     var msgInfo = msgList[i];
+/* ------------------------------------*
+ *          get all private Msg
+ * ------------------------------------*/
 
-     var username = msgInfo.username;
-     var message = msgInfo.message;
-     var datetime = msgInfo.datetime;
-     var receiver = msgInfo.receiver;
-     client.emit("messages", {username:username, message: message, datetime: datetime, receiver:receiver});
-     }
-     }
-     });
-*/
+    msgModel.getPrivateMsgs("privatemsg", function (err, msgList) {
+        if (err) {
+            res.sendStatus(500);
+        }
+        else {
+            for (var i = 0; i < msgList.length; i++) {
+                var msgInfo = msgList[i];
 
-    //Getting all announcements
-     msgModel.getMsgs("announcement", function (err, announcementList)
-     {
-     if(err)
-     {
-     res.sendStatus(500);
-     }
-     else
-     {
-     for(var i=0; i<announcementList.length; i++)
-     {
-     var announcementInfo = announcementList[i];
+                var username = msgInfo.username;
+                var message = msgInfo.message;
+                var datetime = msgInfo.datetime;
+                var receiver = msgInfo.receiver;
+                //console.log("getting private msg from "+ username+"message: "+ message+"receiver: "+receiver);
 
-     var username = announcementInfo.username;
-     var message = announcementInfo.message;
-     var datetime = announcementInfo.datetime;
-     client.emit("announcements", {username:username, message: message, datetime: datetime});
-     }
-     }
-     });
-//
+                client.emit("messages", {username: username, message: message, datetime: datetime, receiver: receiver});
+            }
+        }
+    });
+
+/* ------------------------------------*
+ *          get all announcements
+ * ------------------------------------*/
+
+    msgModel.getMsgs("announcement", function (err, announcementList) {
+        if (err) {
+            res.sendStatus(500);
+        }
+        else {
+            for (var i = 0; i < announcementList.length; i++) {
+                var announcementInfo = announcementList[i];
+                var username = announcementInfo.username;
+                var message = announcementInfo.message;
+                var datetime = announcementInfo.datetime;
+                client.emit("announcements", {username: username, message: message, datetime: datetime});
+            }
+        }
+    });
+
+/* ------------------------------------*
+ *          Send Msg
+ * ------------------------------------*/
+
     client.on("messages", function (data) {
-        console.log("on incomingMessage...");
+        console.log("on incomingMsg ...");
         var username = data.username;
         var message = data.message;
         var datetime = data.datetime;
         //Joan
         var receiver = data.receiver;
-        console.log("username:........" + username);
-        console.log("receiver:........" + receiver);
+        console.log("username: ..." + username);
+        console.log("receiver: ..." + receiver);
 
-        //console.log(username + " ,"  + message + " ," + datetime);
         client.broadcast.emit("messages", data);//无论公聊私聊都广播发
 
-        if(receiver==="All"){
-         msgModel.saveAllMsg("publicmsg", username, message, datetime, function (err, status){});
-         
-         }else{
-         msgModel.savePrivateMsg("privatemsg", username, receiver, message, datetime, function (err, status){});
+        if (receiver === "All") {
+            msgModel.saveAllMsg("publicmsg", username, message, datetime, function (err, status) {
+            });
+        } else {
+            msgModel.savePrivateMsg("privatemsg", username, receiver, message, datetime, function (err, status) {
+            });
 
-         }
+        }
 
     });
 
+/* ------------------------------------*
+ *          Send announcement
+ * ------------------------------------*/
+
     client.on("announcements", function (data) {
-        console.log("on incomingAnnouncement...");
+        console.log("on incomingAnnouncement ...");
         var username = data.username;
         var message = data.message;
         var datetime = data.datetime;
 
-        console.log(username + " ," + message + " ," + datetime);
+        console.log("Announcement: ..."+ username + " ," + message + " ," + datetime);
 
         client.broadcast.emit("announcements", {username: username, message: message, datetime: datetime});
 
@@ -339,7 +396,25 @@ io.on("connection", function (client) {
         });
     });
 
+/* ------------------------------------*
+ *          Send status
+ * ------------------------------------*/
+    //status: selValue, updatedat: getTimer()
+    
+    client.on("status", function (data) {
+        console.log(data.username + "... change status.");
+        userModel.updateStatus(data.username, data.status, data.updatedat, function (err, status) {
+            if(err){
+                console.log("update status err...." + err + "......" + status);
+            }
+        });
+        client.broadcast.emit("status", data);
+        console.log("client.broadcast.emit('status', data);");
+
+    });
+
 });
+
 
 server.listen(app.get('port'));
 console.log("App Server is up and running. Listening on port 8888:");

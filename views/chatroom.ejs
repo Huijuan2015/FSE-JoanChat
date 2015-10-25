@@ -55,10 +55,13 @@
 <%- include partials/navbar_partial %>
 
  
-
+<div id="chating"  style="display: none">
 <div class="container">
+    <ul class="nav nav-tabs nav-justified" id = "talkingTo" style="color: #fff; text-align: center; font-size: 75%; font-weight: bold; background-color:#5bc0de "><%= receiver%>
+    </ul>
 <div class="wrap well" > <!--style="overflow:scroll"固定长宽-->
-<ul class="nav nav-tabs nav-justified" id = "talkingTo" style="color: #fff; text-align: center; font-size: 75%; font-weight: bold; background-color:#5bc0de "><%= receiver%></ul>
+<ul class="nav nav-tabs nav-justified" id = "talkingTo" style="color: #fff; text-align: center; font-size: 75%; font-weight: bold; background-color:#5bc0de "><%= receiver%>
+</ul>
 <!--<div class="label" id = "talkingTo" style="width:100%">-->
     <div id="messages">
     </div> 
@@ -82,7 +85,19 @@
     </div>
   </div>
 </div>  
+</div>
+<script>
+    $(document).ready(function(){
+        //$('#directorypage').addClass('active');
+        var url = document.domain + ":8888";
+        console.log(url);
+        var socket = io.connect(url);
 
+        socket.on("messages", function(data)
+        {
+            $('#annalert').show();
+        });
+    });</script>
 </body>
 </html>
 

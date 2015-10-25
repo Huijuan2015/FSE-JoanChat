@@ -10,11 +10,4 @@ $(document).ready(function(){
     $('#annalert').show();
     
     });
-       socket.on("new message", function(data)
-    {
-    
-    
-    $('#annalert').show();
-    
-    });
 });
