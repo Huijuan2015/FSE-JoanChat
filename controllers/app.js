@@ -316,8 +316,7 @@ io.on("connection", function (client) {
     msgModel.getPrivateMsgs("privatemsg", function (err, msgList) {
         if (err) {
             res.sendStatus(500);
-        }
-        else {
+        }else {
             for (var i = 0; i < msgList.length; i++) {
                 var msgInfo = msgList[i];
 

@@ -103,6 +103,7 @@ Message.getPrivateMsgs = function(messageType, callback)
         msgInfo.datetime = row.DATETIME;
         //SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME
         console.log("row name: "+ row.SENDERUSERNAME+"message: "+ row.MESSAGE+"receiver: "+row.RECEIVERUSERNAME+"datetime:"+row.DATETIME);
+        console.log();
         msgList.push(msgInfo);
       });
 
@@ -113,6 +114,41 @@ Message.getPrivateMsgs = function(messageType, callback)
   });
   msgList = [];
 };
+
+//get private msg by id
+/*
+Message.getPrivateMsgbyID = function(messageID, callback)
+{
+  var msgList = [];
+
+  var query;
+  //if(messageType === 'privatemsg')
+    query = 'SELECT SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME FROM USERPRIVATEMESSAGEHISTORY WHERE ID = '+ messageID;
+
+  db.all(query, function(err, rows)
+  {
+    if(rows!== undefined)
+    {
+      rows.forEach(function (row)
+      {
+        var msgInfo = {};
+        msgInfo.username = row.SENDERUSERNAME;
+        //JOAN
+        msgInfo.receiver = row.RECEIVERUSERNAME;
+        msgInfo.message = row.MESSAGE;
+        msgInfo.datetime = row.DATETIME;
+        //SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME
+        console.log("row name: "+ row.SENDERUSERNAME+"message: "+ row.MESSAGE+"receiver: "+row.RECEIVERUSERNAME+"datetime:"+row.DATETIME);
+        msgList.push(msgInfo);
+      });
+
+      callback(null, msgList);
+    }
+    if (err)
+      callback(err, null);
+  });
+  msgList = [];
+};*/
 
 
 Message.saveAllMsg = function(messageType, username, message, datetime, callback)

@@ -153,10 +153,10 @@ app.post("/message/announcement/:username", function(req, res)
     if (err)
       res.sendStatus(500);
     else
-      res.sendStatus(status);    
+      res.send(JSON.msgList);   
   });
 });
-//Send a chat message to another user
+//14.Send a chat message to another user
 app.post("/message/:username/:receiver", function(req, res)
 {
   console.log("Calling private chat REST method...");
@@ -166,11 +166,56 @@ app.post("/message/:username/:receiver", function(req, res)
     if (err)
       res.sendStatus(500);
     else
-      res.sendStatus(JSON.stringify(msgList));    
+      res.sendStatus(status);    
   });
 });
 
+//15.Retrieve all private chat messages between two users
+app.get("/messages/:username/:username", function(req, res)
+{
+  console.log("Calling private chat REST method...");
 
+  msgModel.getPrivateMsgs("privatemsg", function(err, msgList) 
+  {
+    if (err)
+      res.sendStatus(500);
+    else
+      res.send(JSON.stringify(msgList));    
+  });
+});
+
+//16.Retrieve all users with whom a user has privately chatted with
+
+app.get("/users/chatbuddies/:username", function(req, res)
+{
+  console.log("Calling chatbuddies REST method...");
+
+  var sentUsername = req.params.username;
+
+  userModel.getChatbuddies(sentUsername, function(err, userList) 
+  {
+    if (err)
+      res.sendStatus(500);
+    else
+      res.send(JSON.stringify(userList));    
+  });
+});
+
+//17.Retrieve a message by ID
+app.get("/message/:messageID", function(req, res)
+{
+  console.log("Calling messageid REST method...");
+
+  var messageID = req.params.messageID;
+
+  msgModel.getPrivateMsgbyID("privatemsg", function(err, messageID) 
+  {
+    if (err)
+      res.sendStatus(500);
+    else
+      res.send(JSON.stringify(msgList));    
+  });
+});
 
 server.listen(7777);
 console.log("Rest Server is up and running. Listening on port 7777...");

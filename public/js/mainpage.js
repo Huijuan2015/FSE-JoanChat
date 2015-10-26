@@ -5,6 +5,10 @@ $('document').ready(function () {
     console.log(url);
     var socket = io.connect(url);
 
+/* ------------------------------------*
+ *        ?      
+ * ------------------------------------*/
+
     var lis = $("#myNavbar ul:first li");
     console.log("divs.length:....." + lis.length);
     var username = $('#user').text();
@@ -15,6 +19,9 @@ $('document').ready(function () {
     arr.push("All");
     arr.push("annonce");
 
+/* ------------------------------------*
+ *        Query for ?     
+ * ------------------------------------*/
 
     $('li').click(function () {
         console.log("lis[i].click........" + $(this).children('a').text().substring(0, $(this).children('a').text().indexOf('New')));
@@ -22,6 +29,10 @@ $('document').ready(function () {
         showThisHideOther(arr[$(this).index()], arr);
 
     });
+
+/* ------------------------------------*
+ *        ?     
+ * ------------------------------------*/
 
     $('.panel-heading').click(function () {
         var str = $(this).children('a').first().text().replace(/(^\s*)|(\s*$)/g, "");
@@ -49,6 +60,10 @@ $('document').ready(function () {
         }
     });
 
+/* ------------------------------------*
+ *      Hide page instead of change       
+ * ------------------------------------*/
+
     function showThisHideOther(id, arr) {
         for (var i = 0; i < arr.length; i++) {
 
@@ -61,6 +76,10 @@ $('document').ready(function () {
             }
         }
     }
+
+/* ------------------------------------*
+ *             
+ * ------------------------------------*/
 
     $(window).keydown(function (e) {
         if (e.keyCode == 13) {
@@ -90,6 +109,9 @@ $('document').ready(function () {
 
     });
 
+/* ------------------------------------*
+ *        press enter to send msg, ?postmsgJane?   
+ * ------------------------------------*/
 
     $("button[id^='postmsg']").on('click', function () {
         console.log("id....."+$(this).attr('id'));
@@ -97,6 +119,7 @@ $('document').ready(function () {
     $("#postmsgJane").on('click', function () {
         console.log("id....."+$(this).attr('id'));
     });
+
     function getTimer() {
         var date = new Date();
         var hr = date.getHours();
@@ -110,6 +133,9 @@ $('document').ready(function () {
         return fullDate;
     }
 
+/* ------------------------------------*
+ *        receive msg     
+ * ------------------------------------*/
 
     socket.on("messages", function (data) {
 
@@ -144,10 +170,11 @@ $('document').ready(function () {
             var scroller = $('.wrap');
             scroller.scrollTop(scroller.get(0).scrollHeight);
         }
-
-
-
     });
+
+/* ------------------------------------*
+ *             
+ * ------------------------------------*/
 
     socket.on("announcements", function (data) {
         console.log("Message received!");
@@ -166,6 +193,10 @@ $('document').ready(function () {
         //$.post("/status", {status: selValue, updatedat: getTimer()});
         socket.emit("status",{username:username,status: selValue, updatedat: getTimer()});
     });
+
+/* ------------------------------------*
+ *             
+ * ------------------------------------*/
 
     socket.on("status",function(data){
         console.log('socket.on("status",function(data)');

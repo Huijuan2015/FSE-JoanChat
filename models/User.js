@@ -50,6 +50,47 @@ User.getSingleUser = function(sentUsername, callback)
   });
 }
 
+//get chatbuddies
+User.getChatbuddies = function(sender, callback)
+{
+    console.log("Getting chatbuddies with : " + sender);
+
+    var userList = [];
+
+    db.all("SELECT RECEIVERUSERNAME FROM USERPRIVATEMESSAGEHISTORY WHERE SENDERUSERNAME ='" + sender + "'", function(err, rows) 
+    {  
+      if(rows !== undefined)
+      {
+        rows.forEach(function (row) 
+        {
+          var userInfo = {};
+          userInfo.username = row.RECEIVERUSERNAME;
+       //TODO duplicate
+         //if(userList.indexof(userInfo.username)<0){
+            userList.push(userInfo);
+          //}*/
+    /*rows.forEach(function (row) 
+        {
+         // var userInfo = {};   这句不要了
+          username = row.RECEIVERUSERNAME;
+       
+         if(userList.indexof(username)<0){
+            userList.push(username);
+          }*/
+
+    
+        });
+         
+
+        callback(null, userList);
+      }
+
+      if (err)
+        callback(err, null);  
+  });
+    userList = [];
+}
+
 User.logout = function(sentUsername,logoutat, callback)
 {
   console.log("Checking if the user is logged in---: " + sentUsername);
@@ -226,6 +267,8 @@ User.getAllUsers = function(callback)//gkishore: code for directory access
   });
   userList = [];
 }
+
+
 
 User.updateStatus = function(sentUsername, sentStatusCode, updatedAt, callback)
 {

@@ -66,6 +66,12 @@ $('document').ready(function() {
 <%- include partials/navbar_partial %>
 <div id="welcome">
 <div class="container" style="margin-top: 40px">
+<!--搜索框-->
+<center><div class="input-append">
+    <input type="text" class="span2 search-query">
+        <button type="submit" class="btn" style="color: #fff; background-color:#5bc0de">Search</button></center>
+</div>
+<!--搜索框-->
     <div class="jumbotron well">
 
         <h4>Welcome <span><%=username%>!</span></h4>
@@ -129,7 +135,7 @@ $('document').ready(function() {
                         <% } else { %>
                         <span class="glyphicon glyphicon-minus-sign" style ="color:red;"></span>
                         <% } %>
-                        <%= userList[i].username %><span id=<%= userList[i].username %>alert class="badge badge-warning" style="display:none;">New</span>
+                        <%= userList[i].username %><span id=<%= userList[i].username %>alert class="badge badge-warning" style="display:none; color =#FF0000">New</span>
                     </a>
                     <!--<a href="#"><span class="badge">42</span></a>-->
 
