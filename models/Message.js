@@ -1,6 +1,6 @@
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('../controllers/SSNOC.DB');
-//Joan
+
 function Message(username, message, datetime, receiver)
 {
   this.local =
@@ -13,36 +13,7 @@ function Message(username, message, datetime, receiver)
      };
   }
 
-// Message.storeMessage = function (username, message, datetime, callback)
-// {
-// 	  db.serialize(function() 
-//     {
-//       stmt = db.prepare("INSERT INTO USERMESSAGEHISTORY VALUES (?,?,?,?)");
-
-//       stmt.run(null, username, message, datetime);
-//        stmt.finalize();
-//     });
-// 	callback(err, true);
-// }
-
-//Joan
-/*
-Message.getMsgType = function(receiver, callback)
-{
-  //var messageType = '';
-  if(receiver === "All"){
-    messageType = 'publicmsg';
-  }else{
-    messageType = 'privatemsg';
-  }
-  console.log("message type is " + messageType);
-  return messageType;
-
-
-};*/
-   
-
-
+//history msg?
 Message.getMsgs = function(messageType, callback)
 {
   var msgList = [];
@@ -51,7 +22,7 @@ Message.getMsgs = function(messageType, callback)
   var query;
 
   if(messageType === 'publicmsg')
-  	query = "SELECT USERNAME, MESSAGE, DATETIME FROM USERPUBLICMESSAGEHISTORY limit 50";
+  	query = "SELECT USERNAME, MESSAGE, DATETIME, STATUS  FROM USERPUBLICMESSAGEHISTORY limit 50";
   else if(messageType === 'announcement')
   	query = "SELECT USERNAME, MESSAGE, DATETIME FROM USERANNOUNCEMENTHISTORY";
   
@@ -65,9 +36,9 @@ Message.getMsgs = function(messageType, callback)
         msgInfo.username = row.USERNAME;
         msgInfo.message = row.MESSAGE;
         msgInfo.datetime = row.DATETIME;
+        msgInfo.status=row.STATUS
       
-        console.log("row name: "+ row.USERNAME+"message: "+ row.MESSAGE);
-        //msgList.push(msgInfo);
+        msgList.push(msgInfo);
 
       });
 
@@ -79,7 +50,7 @@ Message.getMsgs = function(messageType, callback)
   msgList = [];
 };
 
-
+//private msg history
 Message.getPrivateMsgs = function(messageType, callback)
 {
   var msgList = [];
@@ -87,7 +58,7 @@ Message.getPrivateMsgs = function(messageType, callback)
 
   var query;
   if(messageType === 'privatemsg')
-    query = 'SELECT SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME FROM USERPRIVATEMESSAGEHISTORY';
+    query = 'SELECT SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME , STATUS FROM USERPRIVATEMESSAGEHISTORY';
 
   db.all(query, function(err, rows)
   {
@@ -97,13 +68,10 @@ Message.getPrivateMsgs = function(messageType, callback)
       {
         var msgInfo = {};
         msgInfo.username = row.SENDERUSERNAME;
-        //JOAN
         msgInfo.receiver = row.RECEIVERUSERNAME;
         msgInfo.message = row.MESSAGE;
         msgInfo.datetime = row.DATETIME;
-        //SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME
-        console.log("row name: "+ row.SENDERUSERNAME+"message: "+ row.MESSAGE+"receiver: "+row.RECEIVERUSERNAME+"datetime:"+row.DATETIME);
-        console.log();
+        msgInfo.status = row.STATUS;
         msgList.push(msgInfo);
       });
 
@@ -115,50 +83,16 @@ Message.getPrivateMsgs = function(messageType, callback)
   msgList = [];
 };
 
-//get private msg by id
-/*
-Message.getPrivateMsgbyID = function(messageID, callback)
-{
-  var msgList = [];
 
-  var query;
-  //if(messageType === 'privatemsg')
-    query = 'SELECT SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME FROM USERPRIVATEMESSAGEHISTORY WHERE ID = '+ messageID;
-
-  db.all(query, function(err, rows)
-  {
-    if(rows!== undefined)
-    {
-      rows.forEach(function (row)
-      {
-        var msgInfo = {};
-        msgInfo.username = row.SENDERUSERNAME;
-        //JOAN
-        msgInfo.receiver = row.RECEIVERUSERNAME;
-        msgInfo.message = row.MESSAGE;
-        msgInfo.datetime = row.DATETIME;
-        //SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME
-        console.log("row name: "+ row.SENDERUSERNAME+"message: "+ row.MESSAGE+"receiver: "+row.RECEIVERUSERNAME+"datetime:"+row.DATETIME);
-        msgList.push(msgInfo);
-      });
-
-      callback(null, msgList);
-    }
-    if (err)
-      callback(err, null);
-  });
-  msgList = [];
-};*/
-
-
-Message.saveAllMsg = function(messageType, username, message, datetime, callback)
+//save msg
+Message.saveAllMsg = function(messageType, username, message, datetime,status, callback)
 {
 	console.log("save " + message);
 
 	var statement;
 
 	if(messageType === 'publicmsg')
-  		statement = "INSERT INTO USERPUBLICMESSAGEHISTORY(ID, USERNAME, MESSAGE, DATETIME) VALUES (?,?,?,?)";
+  		statement = "INSERT INTO USERPUBLICMESSAGEHISTORY(ID, USERNAME, MESSAGE, DATETIME,STATUS) VALUES (?,?,?,?,?)";
   	else if(messageType === 'announcement')
   		statement = "INSERT INTO USERANNOUNCEMENTHISTORY(ID, USERNAME, MESSAGE, DATETIME) VALUES (?,?,?,?)";
 
@@ -168,7 +102,7 @@ Message.saveAllMsg = function(messageType, username, message, datetime, callback
 
       stmt = db.prepare(statement);
 
-      stmt.run(null, username, message, datetime);
+      stmt.run(null, username, message, datetime,status);
       stmt.finalize();
           		console.log("serializing end " + message);
 
@@ -180,13 +114,14 @@ Message.saveAllMsg = function(messageType, username, message, datetime, callback
     });
 }
 
-Message.savePrivateMsg = function(messageType, username, receiver, message, datetime, callback)
+//save private msg
+Message.savePrivateMsg = function(messageType, username, receiver, message, datetime,status, callback)
 {
   console.log("save " + message);
 
   var statement;
   if(messageType === 'privatemsg')
-    statement = "INSERT INTO USERPRIVATEMESSAGEHISTORY(ID, SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME) VALUES (?,?,?,?,?)";
+    statement = "INSERT INTO USERPRIVATEMESSAGEHISTORY(ID, SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME,STATUS) VALUES (?,?,?,?,?,?)";
 
   db.serialize(function(err)
     {
@@ -194,7 +129,7 @@ Message.savePrivateMsg = function(messageType, username, receiver, message, date
 
       stmt = db.prepare(statement);
 
-      stmt.run(null, username,receiver, message, datetime);
+      stmt.run(null, username,receiver, message, datetime,status);
       stmt.finalize();
               console.log("serializing end " + message);
 

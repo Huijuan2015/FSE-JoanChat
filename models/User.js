@@ -2,7 +2,9 @@ var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('../controllers/SSNOC.DB');
 var bCrypt = require('bcrypt-nodejs');
 
-function User(username, password, fullName, isAdmin)
+
+//TODO--change based on db?
+function User(username, password, isAdmin)
 {
   this.local =
   {
@@ -50,47 +52,6 @@ User.getSingleUser = function(sentUsername, callback)
   });
 }
 
-//get chatbuddies
-User.getChatbuddies = function(sender, callback)
-{
-    console.log("Getting chatbuddies with : " + sender);
-
-    var userList = [];
-
-    db.all("SELECT RECEIVERUSERNAME FROM USERPRIVATEMESSAGEHISTORY WHERE SENDERUSERNAME ='" + sender + "'", function(err, rows) 
-    {  
-      if(rows !== undefined)
-      {
-        rows.forEach(function (row) 
-        {
-          var userInfo = {};
-          userInfo.username = row.RECEIVERUSERNAME;
-       //TODO duplicate
-         //if(userList.indexof(userInfo.username)<0){
-            userList.push(userInfo);
-          //}*/
-    /*rows.forEach(function (row) 
-        {
-         // var userInfo = {};   这句不要了
-          username = row.RECEIVERUSERNAME;
-       
-         if(userList.indexof(username)<0){
-            userList.push(username);
-          }*/
-
-    
-        });
-         
-
-        callback(null, userList);
-      }
-
-      if (err)
-        callback(err, null);  
-  });
-    userList = [];
-}
-
 User.logout = function(sentUsername,logoutat, callback)
 {
   console.log("Checking if the user is logged in---: " + sentUsername);
@@ -129,7 +90,10 @@ User.logout = function(sentUsername,logoutat, callback)
   });
 }
 
+User.updateLogout= function (username,logoutat) {
+    db.run("UPDATE USER SET  LASTLOGOUTAT = ? WHERE USERNAME = ?", [logoutat, username]);
 
+}
 User.signup = function(sentUsername, sentPassword, sentCreatedAt, callback)
 {
   console.log("Signing up: ");
@@ -161,8 +125,8 @@ User.signup = function(sentUsername, sentPassword, sentCreatedAt, callback)
 
           db.serialize(function()
           {  
-            var stmt = db.prepare("INSERT INTO USER (USERNAME, PASSWORD, ISADMIN, ISONLINE, STATUS, CREATEDAT, LASTLOGINAT) VALUES (?,?,?,?,?,?,?)");
-            stmt.run(sentUsername, createHash(sentPassword), 0, 1, 'ND', sentCreatedAt, sentCreatedAt);
+            var stmt = db.prepare("INSERT INTO USER (USERNAME, PASSWORD, ISADMIN, ISONLINE, STATUS, CREATEDAT, LASTLOGINAT,LASTLOGOUTAT) VALUES (?,?,?,?,?,?,?,?)");
+            stmt.run(sentUsername, createHash(sentPassword), 0, 1, 'ND', sentCreatedAt, sentCreatedAt,sentCreatedAt);
             stmt.finalize();
           });
 
@@ -208,7 +172,7 @@ User.login = function(sentUsername, sentPassword, lastloginat, callback)
 
               //update lastloginat
               db.run("UPDATE USER SET ISONLINE = ? WHERE USERNAME = ?", [1, sentUsername]);
-              db.run("UPDATE USER SET LASTLOGINAT = ? WHERE USERNAME = ?", [lastloginat, sentUsername]);
+             // db.run("UPDATE USER SET LASTLOGINAT = ? WHERE USERNAME = ?", [lastloginat, sentUsername]);
             }
             else //wrong password
             {
@@ -242,7 +206,7 @@ User.getAllUsers = function(callback)//gkishore: code for directory access
 {
   var userList = [];
   console.log("Getting directory list...");
-  db.all("SELECT USERNAME, ISADMIN, ISONLINE, STATUS, STATUSDATETIME, CREATEDAT, LASTLOGINAT FROM USER ORDER BY ISONLINE DESC, USERNAME ASC", function(err, rows)
+  db.all("SELECT USERNAME, ISADMIN, ISONLINE, STATUS, STATUSDATETIME, CREATEDAT, LASTLOGINAT ,LASTLOGOUTAT FROM USER ORDER BY ISONLINE DESC, USERNAME ASC", function(err, rows)
   {
     if(rows!== undefined)
     {
@@ -256,7 +220,8 @@ User.getAllUsers = function(callback)//gkishore: code for directory access
         userInfo.statusTime = row.STATUSDATETIME;
         userInfo.createdAt = row.CREATEDAT;
         userInfo.lastLoginAt = row.LASTLOGINAT;
-        console.log("row name: "+ row.USERNAME+"online: "+ row.ISONLINE);
+          userInfo.lastLogoutAt = row.LASTLOGOUTAT;
+        console.log("row name: "+ row.USERNAME+"online: "+ row.ISONLINE+"lastLogoutAt:"+userInfo.lastLogoutAt);
         userList.push(userInfo);
       });
 
@@ -268,6 +233,27 @@ User.getAllUsers = function(callback)//gkishore: code for directory access
   userList = [];
 }
 
+User.queryUserByKey=function(keyword){
+        var users = [];
+    console.log("SELECT USERNAME FROM USER WHERE USERNAME ='" + keyword + "'");
+        var ret =  db.all("SELECT USERNAME FROM USER WHERE USERNAME ='" + keyword + "'");
+    console.log("ret...:"+ret);
+        /*{
+
+            if(rows !== undefined)
+            {
+                rows.forEach(function (row)
+                {
+                    var username = row.USERNAME;
+                    users.push(username);
+                });
+
+                callback(null, users);
+            }
+            if (err)
+                callback(err, null);
+        });*/
+    };
 
 
 User.updateStatus = function(sentUsername, sentStatusCode, updatedAt, callback)

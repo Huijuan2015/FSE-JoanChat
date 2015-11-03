@@ -1,7 +1,6 @@
 /* ------------------------------------*
  *          include libraries 
  * ------------------------------------*/
-
 var express = require('express');
 var bodyParser = require('body-parser');
 var bCrypt = require('bcrypt-nodejs');
@@ -19,34 +18,39 @@ var maindir = "../";
 var userModel = require(maindir + "/models/User");
 var msgModel = require(maindir + "/models/Message");
 
-app.set('port', process.env.PORT || 8888);
-app.set('views', maindir + '/views');
-app.set('view engine', 'ejs');
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(session({secret: 'ssshhh', resave: true, saveUninitialized: true}));
-app.use(partials());//partials
-
-var server = require('http').createServer(app);
-app.use(express.static(maindir + '/public'));
-var io = require('socket.io').listen(server);
-
-
 /* ------------------------------------*
- *          sending receiver 
+ *          Get value of receiver 
  * ------------------------------------*/
 
 app.param('receiver', function (req, res, next, value) {
 
     // try to get the user details from the User model and attach it to the request object
-    console.log("receiver for private chat is: ..." + value);
+    console.log("receiver for private chat: " + value);
     req.receiver = value;
     next();
 
 });
 
 /* ------------------------------------*
- *          Login site 
+ *          sypport files 
+ * ------------------------------------*/
+
+app.set('port', process.env.PORT || 8888);
+app.set('views', maindir + '/views');
+app.set('view engine', 'ejs');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(session({secret: 'ssshhh', resave: true, saveUninitialized: true}));
+
+//partials
+app.use(partials());
+
+var server = require('http').createServer(app);
+app.use(express.static(maindir + '/public'));
+var io = require('socket.io').listen(server);
+
+/* ------------------------------------*
+ *             site 
  * ------------------------------------*/
 
 app.get('/index', function (req, res) {
@@ -61,8 +65,9 @@ app.get('/', function (req, res) {
 });
 
 /* ------------------------------------*
- *             POST Login 
+ *          Login page
  * ------------------------------------*/
+
 
 app.post('/login', function (req, res) {
     console.log("calling login - POST");
@@ -83,11 +88,16 @@ app.post('/login', function (req, res) {
 });
 
 /* ------------------------------------*
- *          POST Sign up 
+ *          Sign up page
  * ------------------------------------*/
+
+app.get('/signup', function (req, res){
+    res.render(maindir + '/views/signup');
+});
 
 app.post('/signup', function (req, res) {
     console.log("calling signup - POST");
+
 
     userModel.signup(req.body.username, req.body.password, req.body.createdat, function (err, signupInfo) {
         //console.log("returned status: " + status);
@@ -107,7 +117,25 @@ app.post('/signup', function (req, res) {
 });
 
 /* ------------------------------------*
- *          POST Status
+ *          Welcome page
+ *    accessing home page from nav bar
+ * ------------------------------------*/
+
+app.get('/welcomepage', function (req, res)
+{
+
+    if (req.session.username !== undefined) {
+
+        res.render('welcomepage', {username: req.session.username});
+    }
+    else {
+        res.render('login', {pagemsg: 'Please login!'});
+    }
+
+});
+
+/* ------------------------------------*
+ *          status page
  * ------------------------------------*/
 
 app.post('/status', function (req, res) {
@@ -130,7 +158,7 @@ app.post('/status', function (req, res) {
 });
 
 /* ------------------------------------*
- *          GET directory 
+ *          Directory page 
  * ------------------------------------*/
 
 app.get('/directory', function (req, res)
@@ -153,8 +181,9 @@ app.get('/directory', function (req, res)
 
 });
 
+
 /* ------------------------------------*
- *   GET chatroom - public & private 
+ *          chatroom page
  * ------------------------------------*/
 
 app.get('/chatroom', function (req, res) {
@@ -175,7 +204,7 @@ app.get('/chatroom', function (req, res) {
 });
 
 /* ------------------------------------*
- *         GET announcements 
+ *         announcement page
  * ------------------------------------*/
 
 app.get('/announcements', function (req, res)
@@ -192,36 +221,29 @@ app.get('/announcements', function (req, res)
 });
 
 /* ------------------------------------*
- *      GET welcome page & nav bar
+ *         main page
  * ------------------------------------*/
 
-app.get('/welcomepage', function (req, res)
-{
-
-    if (req.session.username !== undefined) {
-
-        res.render('welcomepage', {username: req.session.username});
-    }
-    else {
-        res.render('login', {pagemsg: 'Please login!'});
-    }
-
-});
-
-/* ------------------------------------*
- *       GET mainpage
- * ------------------------------------*/
-
-app.get('/mainpage', function (req, res)//gkishore: code for accessing home page from nav bar
+app.get('/mainpage', function (req, res)
 {
 
         if (req.session.username !== undefined) {
+
             userModel.getAllUsers(function (err, userList) {
+                var lastLogoutAt;
+                for(var i=0 ;i< userList.length;i++){
+                    if(userList[i].username===req.session.username){
+                        lastLogoutAt=userList[i].lastLogoutAt.replace(' ',"%20");
+                        console.log("lastLOgout.....:"+lastLogoutAt);
+                        break;
+                    }
+                }
                 if (err) {
                     res.sendStatus(500);
                 }
                 else {
-                    res.render('mainpage', {username: req.session.username, receiver: "All",userList: userList});
+
+                    res.render('mainpage', {username: req.session.username, receiver: "All",userList: userList,lastLogOut:lastLogoutAt});
                 }
 
             });
@@ -234,12 +256,12 @@ app.get('/mainpage', function (req, res)//gkishore: code for accessing home page
 });
 
 /* ------------------------------------*
- *           GET log out
+ *         Logout page
  * ------------------------------------*/
 
-app.get('/logout', function (req, res)// gkishore: app.post changed to app.get
+app.get('/logout', function (req, res)
 {
-    var logoutat = getTimer(new Date());
+    var logoutat = getTimer();
     console.log("logout.........."+logoutat);
     userModel.logout(req.session.username,logoutat, function (err, logoutInfo) {
         var pagename = logoutInfo.pagename;
@@ -249,7 +271,7 @@ app.get('/logout', function (req, res)// gkishore: app.post changed to app.get
             res.sendStatus(500);
         }
         else {
-            req.session.destroy(function (err)//gkishore: destroy cookies on logout
+            req.session.destroy(function (err)//destroy cookies on logout
             {
                 if (err) {
                     console.log(err);
@@ -264,7 +286,7 @@ app.get('/logout', function (req, res)// gkishore: app.post changed to app.get
 });
 
 /* ------------------------------------*
- *             get timer
+ *       ?? Need for every js file?
  * ------------------------------------*/
 
 function getTimer()
@@ -277,24 +299,34 @@ function getTimer()
     var month = (date.getMonth()+1).toString();
     var year = (date.getFullYear()).toString();
     var fullDate = year+'-'+month+'-'+day+' '+hr+':'+min;
+
     console.log("fullDate: " +fullDate);
     return fullDate;
 }
 
 /* ------------------------------------*
- *          receive Msg
+ *          send msg to front end
  * ------------------------------------*/
 
 io.on("connection", function (client) {
-    console.log("on connection ...");
+    console.log("on connection 1234...");
 
-/* ------------------------------------*
- *          get all public Msg
- * ------------------------------------*/
+    client.on('online', function (data) {
+        console.log(data.user +"...........online");
+        client.name = data.user;
+    });
 
+//send all user to front end
+    userModel.getAllUsers(function (err, userList) {
+        client.emit("allUsers",{userList:userList});  
+
+    });
+
+//get public msg
     msgModel.getMsgs("publicmsg", function (err, msgList) {
         if (err) {
-            res.sendStatus(500);
+           // res.sendStatus(500);
+            console.log("getPublic msg error");
         }
         else
         {
@@ -304,19 +336,19 @@ io.on("connection", function (client) {
                 var username = msgInfo.username;
                 var message = msgInfo.message;
                 var datetime = msgInfo.datetime;
-                client.emit("messages", {username: username, message: message, datetime: datetime, receiver: "All"});
+                var status = msgInfo.status;
+                client.emit("messages", {username: username, message: message, datetime: datetime, receiver: "All",status:status});
             }
         }
     });
 
-/* ------------------------------------*
- *          get all private Msg
- * ------------------------------------*/
-
+//get private msg 
     msgModel.getPrivateMsgs("privatemsg", function (err, msgList) {
         if (err) {
-            res.sendStatus(500);
-        }else {
+            //res.sendStatus(500);
+            console.log("getPrivate msg error");
+        }
+        else {
             for (var i = 0; i < msgList.length; i++) {
                 var msgInfo = msgList[i];
 
@@ -324,17 +356,15 @@ io.on("connection", function (client) {
                 var message = msgInfo.message;
                 var datetime = msgInfo.datetime;
                 var receiver = msgInfo.receiver;
-                //console.log("getting private msg from "+ username+"message: "+ message+"receiver: "+receiver);
+                var status = msgInfo.status;
 
-                client.emit("messages", {username: username, message: message, datetime: datetime, receiver: receiver});
+                client.emit("messages", {username: username, message: message, datetime: datetime, receiver: receiver,status:status});
             }
         }
     });
 
-/* ------------------------------------*
- *          get all announcements
- * ------------------------------------*/
 
+//Getting all announcements
     msgModel.getMsgs("announcement", function (err, announcementList) {
         if (err) {
             res.sendStatus(500);
@@ -342,6 +372,7 @@ io.on("connection", function (client) {
         else {
             for (var i = 0; i < announcementList.length; i++) {
                 var announcementInfo = announcementList[i];
+
                 var username = announcementInfo.username;
                 var message = announcementInfo.message;
                 var datetime = announcementInfo.datetime;
@@ -350,44 +381,38 @@ io.on("connection", function (client) {
         }
     });
 
-/* ------------------------------------*
- *          Send Msg
- * ------------------------------------*/
-
+//send msg
     client.on("messages", function (data) {
-        console.log("on incomingMsg ...");
+        console.log("on incomingMessage...");
         var username = data.username;
         var message = data.message;
         var datetime = data.datetime;
-        //Joan
         var receiver = data.receiver;
-        console.log("username: ..." + username);
-        console.log("receiver: ..." + receiver);
+        var  status = data.status;
+        console.log("username:........" + username);
+        console.log("receiver:........" + receiver);
 
-        client.broadcast.emit("messages", data);//无论公聊私聊都广播发
+        client.broadcast.emit("messages", data);
 
         if (receiver === "All") {
-            msgModel.saveAllMsg("publicmsg", username, message, datetime, function (err, status) {
+            msgModel.saveAllMsg("publicmsg", username, message, datetime, status,function (err, status) {
             });
         } else {
-            msgModel.savePrivateMsg("privatemsg", username, receiver, message, datetime, function (err, status) {
+            msgModel.savePrivateMsg("privatemsg", username, receiver, message, datetime,status, function (err, status) {
             });
 
         }
 
     });
 
-/* ------------------------------------*
- *          Send announcement
- * ------------------------------------*/
 
     client.on("announcements", function (data) {
-        console.log("on incomingAnnouncement ...");
+        console.log("on incomingAnnouncement...");
         var username = data.username;
         var message = data.message;
         var datetime = data.datetime;
 
-        console.log("Announcement: ..."+ username + " ," + message + " ," + datetime);
+        console.log(username + " ," + message + " ," + datetime);
 
         client.broadcast.emit("announcements", {username: username, message: message, datetime: datetime});
 
@@ -395,13 +420,9 @@ io.on("connection", function (client) {
         });
     });
 
-/* ------------------------------------*
- *          Send status
- * ------------------------------------*/
     //status: selValue, updatedat: getTimer()
-    
     client.on("status", function (data) {
-        console.log(data.username + "... change status.");
+        console.log(data.username + ".......change status");
         userModel.updateStatus(data.username, data.status, data.updatedat, function (err, status) {
             if(err){
                 console.log("update status err...." + err + "......" + status);
@@ -412,8 +433,40 @@ io.on("connection", function (client) {
 
     });
 
+    /*client.on('disconnect', function() {
+
+        if (users[socket.name]) {
+
+            delete users[socket.name];
+
+            socket.broadcast.emit('offline', {users: users, user: socket.name});
+        }
+    });*/
+
+    client.on('disconnect', function() {
+
+        var time = getTimer();
+        userModel.updateLogout(client.name,time);
+
+    });
+
+
+    //.emit("search",{keyword:keyword,username:username});
+    client.on("search",function(data){
+        var keyword = data.keyword;
+        var user = data.username;
+        //var userList = userModel.queryUserByKey(keyword);
+        var userList;
+        userList=  userModel.queryUserByKey(keyword);
+
+
+        //TODO status,messages
+        client.emit("search",{username:user,userList:userList});
+
+    });
+
+
+
 });
-
-
 server.listen(app.get('port'));
 console.log("App Server is up and running. Listening on port 8888:");
