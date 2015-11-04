@@ -321,6 +321,66 @@ User.getAllUserStatuses = function(sentUsername, callback)
   userStatusList = [];
 }
 
+User.searchUsers = function(keyword, callback)
+{
+    var userList = [];
+    console.log("Searchting  use list by keyword : "+keyword);
+    var query;
+    query = "SELECT USERNAME, ISONLINE, STATUS  FROM USER WHERE USERNAME LIKE '%"+keyword+"%' ORDER BY ISONLINE DESC, USERNAME ASC";
+    console.log("searching user....querying is :"+query);
+    db.all(query, function(err, rows)
+    {
+        if(rows!== undefined)
+        {
+            rows.forEach(function (row)
+            {
+                var msgInfo = {};
+                msgInfo.username = row.USERNAME;
+                msgInfo.isonline = row.ISONLINE;
+                msgInfo.status=row.STATUS
+
+                // console.log("row name: "+ row.USERNAME+"message: "+ row.MESSAGE+"status:"+row.STATUS);
+                userList.push(msgInfo);
+            });
+
+            callback(null, userList);
+        }
+        if (err)
+            callback(err, null);
+    });
+    userList = [];
+};
+
+User.searchUsersByStatus = function(keyword, callback)
+{
+    var userList = [];
+    console.log("Searchting  use list by  status : "+keyword);
+    var query;
+    query = "SELECT USERNAME, ISONLINE, STATUS  FROM USER WHERE STATUS like '"+keyword+"' ORDER BY ISONLINE DESC, USERNAME ASC";
+    console.log("searching user....querying is :"+query);
+    db.all(query, function(err, rows)
+    {
+        if(rows!== undefined)
+        {
+            rows.forEach(function (row)
+            {
+                var msgInfo = {};
+                msgInfo.username = row.USERNAME;
+                msgInfo.isonline = row.ISONLINE;
+                msgInfo.status=row.STATUS
+
+                // console.log("row name: "+ row.USERNAME+"message: "+ row.MESSAGE+"status:"+row.STATUS);
+                userList.push(msgInfo);
+            });
+
+            callback(null, userList);
+        }
+        if (err)
+            callback(err, null);
+    });
+    userList = [];
+};
+
 
 //Utils
 var createHash = function(password)

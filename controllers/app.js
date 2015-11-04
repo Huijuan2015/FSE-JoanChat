@@ -451,19 +451,69 @@ io.on("connection", function (client) {
     });
 
 
-    //.emit("search",{keyword:keyword,username:username});
-    client.on("search",function(data){
-        var keyword = data.keyword;
-        var user = data.username;
-        //var userList = userModel.queryUserByKey(keyword);
-        var userList;
-        userList=  userModel.queryUserByKey(keyword);
-
-
-        //TODO status,messages
-        client.emit("search",{username:user,userList:userList});
-
+     client.on("searchUser",function(data){
+        var users =[];
+        userModel.searchUsers(data.keyword, function (err, userList) {
+            if (err) {
+                console.log("getPublic msg error");
+            }
+            else
+            {
+                users=userList;
+            }
+            console.log("users length is :"+users.length);
+            client.emit("searchUser",{userList:users});
+        });
     });
+
+    client.on("searchByStatus",function(data){
+        var users =[];
+        userModel.searchUsersByStatus(data.keyword, function (err, userList) {
+            if (err) {
+                console.log("getPublic msg error");
+            }
+            else
+            {
+                users=userList;
+            }
+            console.log("users length is :"+users.length);
+            client.emit("searchByStatus",{userList:users});
+        });
+    });
+
+
+   // socket.emit("searchPubMsg",{username:username,keyword:keyword});
+    client.on("searchPubMsg",function(data){
+        var pubMsgList =[];
+        msgModel.searchPubMsg(data.keyword, function (err, msgList) {
+            if (err) {
+                console.log("searchPubMsg msg error");
+            }
+            else
+            {
+                pubMsgList=msgList;
+            }
+            console.log("pubMsgList length is :"+pubMsgList.length);
+            client.emit("searchPubMsg",{pubMsgList:pubMsgList});
+        });
+    });
+
+    //socket.emit("searchPriMsg",{username:username,keyword:keyword});
+    client.on("searchPriMsg",function(data){
+        var msgs =[];
+        msgModel.searchPrivateMsgs(data.keyword, function (err, msgList) {
+            if (err) {
+                console.log("searchPriMsg  error");
+            }
+            else
+            {
+                msgs=msgList;
+            }
+            console.log("msgs length is :"+msgs.length);
+            client.emit("searchPriMsg",{msgList:msgs});
+        });
+    });
+
 
 
 

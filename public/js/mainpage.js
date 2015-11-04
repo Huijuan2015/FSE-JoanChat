@@ -6,7 +6,7 @@ $('document').ready(function () {
 
     //拿到了上一次logout的时间,为的是判断历史信息是已读的还是未读的
     var lastlogout = $('#lastLogout').attr("value").replace("%20", ' ');
-    console.log("lastlogout............."+lastlogout);
+    console.log("lastlogout............." + lastlogout);
 
     // var lis = $("#myNavbar ul:first li");
 
@@ -28,31 +28,27 @@ $('document').ready(function () {
     arr.push("annonce");    //公告窗口
     arr.push("searchResult")  //搜索结果窗口
 
-    var allUsers = [];
+    //var allUsers = [];
     var publicMsg = [];
     var privateMsg = [];
-    var statusOK = [];
-    var statusHELP = [];
-    var statusSOS = [];
+
 
     var splitter = '|';
 
 
-    socket.on("allUsers", function (data) {
-        var all = data.userList;
-        for (var i = 0; i < all.length; i++) {
-            allUsers.push(all[i].username);
-        }
-    });
+
 
     //自己上线,告诉服务器
     socket.emit('online', {user: username});
 
     //$('li')是黑色的那栏的东西,就是有消息提醒的时候,点一点它,消息提醒的new就hide
     $('li').click(function () {
+        if ($(this).index() != 4) {
+
         console.log("lis[i].click........" + $(this).children('a').text().substring(0, $(this).children('a').text().indexOf('New')));
         $(this).children('a').children('span').hide();    //消息提醒的new就hide
         showThisHideOther(arr[$(this).index()], arr);      //然后它对应的窗口就出来了
+    }
     });
 
     //这是点directory里面的用户名
@@ -69,6 +65,36 @@ $('document').ready(function () {
             if (arr.indexOf(name) >= 0) {
                 console.log("name in arr....");
                 $('#' + name + 'alert').hide();   //点了它,它旁边的alert就 hide起来
+                showThisHideOther(name, arr);     //然后展示跟他聊天的窗口
+            }
+
+            //如果arr里面没有跟这个人聊天的窗口
+            else {
+                //在body下面新增跟这个人的聊天窗口,id是那个人的名字
+                var prichat = '<div id="' + name + '" ><div class="container"><div class="wrap well" >'
+                    + ' <ul class="nav nav-tabs nav-justified" id = "talkingTo' + name + '" style="color: #fff; text-align: center; font-size: 75%; font-weight: bold; background-color:#5bc0de ">' + name + '</ul>'
+                    + '<div id="messages' + name + '"></div><div class="push"></div></div></div><div class="footer"><div class="container"><div class="row"><div class="form-group"><div class="col-xs-8 col-sm-9">'
+                    + '<input type="text" class="form-control input-lg" rows="3" id="msgbox' + name + '" name="msgbox"></div><div class="col-xs-4 col-sm-2"><button type="submit" id="postmsg' + name + '" class="form-control btn btn-info" >Post</button></div></div></div></div></div></div>';
+                body.append(prichat);
+
+                arr.push(name);   //然后把这个新增的窗口id放进arr里面
+                //TODO 把聊天记录放这里,每次打开新聊天窗口都emit prihistory 然后on prihistory
+
+                showThisHideOther(name, arr);   //然后就是展现在这个新建的聊天窗口嘛
+            }
+        }
+    });
+
+    $('.searchUser').click(function(){
+        var name = $(this).children('a').first().text().replace(/(^\s*)|(\s*$)/g, "");
+
+        //加个判断是不是自己,不是自己才进行括号里面的操作
+        if (name !== username) {         ////@@@@@@@@@@@加这行
+
+            //如果arr里面有了跟这个人的聊天窗口id
+            if (arr.indexOf(name) >= 0) {
+                console.log("name in arr....");
+               // $('#' + name + 'alert').hide();   //点了它,它旁边的alert就 hide起来
                 showThisHideOther(name, arr);     //然后展示跟他聊天的窗口
             }
 
@@ -208,14 +234,92 @@ $('document').ready(function () {
 
     //搜索
     $('#searchBtn').click(function () {
-        $('#userList').children().html('');
+        showThisHideOther("searchResult",arr);
+        removeAllChild("userList");
+        removeAllChild("statusList");
+        removeAllChild("publicMsgList");
+        removeAllChild("privateMsgList");
+
         var keyword = $('#searchBox').val();
         if (keyword != '') {
-            searchUsers(keyword);     //搜索用户
-            //searchPubMsg(keyword);
-            //searchPriMsg(keyword);
+
+            socket.emit("searchUser", {username: username, keyword: keyword});
+            ;;;;;;;
+            socket.emit("searchPubMsg", {username: username, keyword: keyword});
+            ;;;;;;;;
+            socket.emit("searchPriMsg", {username: username, keyword: keyword});
+            ;;;;;;;;
+            socket.emit("searchByStatus", {username: username, keyword: keyword});
+
         }
     });
+
+    $('#searchBox').focus(function(){
+        showThisHideOther("searchResult",arr);
+    });
+
+
+    socket.on("searchUser", function (data) {
+        var users = data.userList;
+        if(users.length==0){
+            $('#userList').append('<div>Cannot find such user!</div>');
+        }else{
+        for (var i = 0; i < users.length; i++) {
+            var user = users[i];
+            if(user.isonline === 1){
+              $('#userList').append('<div class="searchUser"><a href="#" > <span class="glyphicon glyphicon-plus-sign" style="color:green;"></span>'+user.username+'<span id="'+user.username+'Span" class="badge badge-warning" style="display:none">New</span> </a></div>');
+            }else{
+                $('#userList').append('<div  class="searchUser"></div><a href="#"> <span class="glyphicon glyphicon-minus-sign" style="color:red;"></span>'+user.username+'<span id="'+user.username+'Span" class="badge badge-warning" style="display:none">New</span> </a></div>');
+            }
+        }
+        }
+    });
+
+    socket.on("searchByStatus", function (data) {
+
+        var userList = data.userList;
+        if(userList.length==0){
+            $('#statusList').append('<div>Cannot fine user in this status!</div>');
+        }else
+        {
+            var status = userList[0].status;
+            for(var i=0;i<userList.length;i++){
+                var name = userList[i].username;
+                $('#statusList').append('<div>'+name+getUserCurrentStatus(status)+'</div>');
+            }
+        }
+    });
+    socket.on("searchPubMsg", function (data) {
+        var msgs = data.pubMsgList;
+        if(msgs.length==0){
+            $('#publicMsgList').append('<div>Cannot find public message like this!</div>');
+        }else{
+        for(var i=0;i<msgs.length;i++){
+           var msg = msgs[i];
+            var sender = msg.username;
+            var datetime = msg.datetime;
+            var message = msg.message;
+            var status= msg.status;
+            $('#publicMsgList').append('<div class="well"><p class = "pull-left"><b>' + sender + getUserCurrentStatus(status) + '</b></p><p class="dateTimeFormat pull-right"><b>' + datetime + '</b></p><br><div class="clearfix"></div><p>' + message + '</p></div>')
+        }
+        }
+    });
+
+    socket.on("searchPriMsg", function (data) {
+        var primsgs = data.msgList;
+        if(primsgs.length==0){
+            $('#privateMsgList').append('<div>Cannot find public message like this!</div>');
+        }else{
+        for(var i=0;i<primsgs.length;i++){
+            var msg = primsgs[i];
+            var sender = msg.username;
+            var message = msg.message;
+            var datetime = msg.datetime;
+            var status = msg.status;
+            $('#privateMsgList').append('<div class="well"><p class = "pull-left"><b>' + sender + getUserCurrentStatus(status) + '</b></p><p class="dateTimeFormat pull-right"><b>' + datetime + '</b></p><br><div class="clearfix"></div><p>' + message + '</p></div>');
+        }}
+    });
+
 
     function searchUsers(keyword) {
         var result = [];
@@ -232,19 +336,19 @@ $('document').ready(function () {
         }
     }
 
-    function searchPubMsg(keyword){
-        console.log("publicMsg length....."+publicMsg.length);
-        for(var i=0;i<publicMsg.length-10;i++){
+    function searchPubMsg(keyword) {
+        console.log("publicMsg length....." + publicMsg.length);
+        for (var i = 0; i < publicMsg.length - 10; i++) {
             var result = [];
             var singlrMsg = publicMsg[i];
-                if (singlrMsg.indexOf(keyword) >= 0) {
-                    result.push(singlrMsg);
-                }
+            if (singlrMsg.indexOf(keyword) >= 0) {
+                result.push(singlrMsg);
+            }
 
             if (result.length > 0) {
                 for (var i = 0; i < result.length; i++) {
                     $('#publicMsgList').append('<span id="' + result[i] + 'span" class="badge badge-warning" style="display:inline">' + result[i] + '</span>');
-                    if(i>10){
+                    if (i > 10) {
                         break;
                     }
                 }
@@ -333,9 +437,17 @@ $('document').ready(function () {
             return "SOS";
         }
         else
-        return "NONE";
+            return "NONE";
     }
 
+    function removeAllChild(id)
+    {
+        var div = document.getElementById(id);
+        while(div.hasChildNodes()) //当div下还存在子节点时 循环继续
+        {
+            div.removeChild(div.firstChild);
+        }
+    }
 
     $("button[id^='postmsg']").on('click', function () {
         console.log("id....." + $(this).attr('id'));

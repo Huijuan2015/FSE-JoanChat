@@ -50,6 +50,39 @@ Message.getMsgs = function(messageType, callback)
   msgList = [];
 };
 
+Message.searchPubMsg = function(keyword, callback)
+{
+    var msgList = [];
+    console.log("Getting " + keyword + "s list...");
+
+    var query;
+    query = "SELECT USERNAME, MESSAGE, DATETIME, STATUS  FROM USERPUBLICMESSAGEHISTORY  WHERE MESSAGE LIKE '%"+keyword+"%' limit 50";
+    console.log("searchPubMsg....querying is :"+query);
+    db.all(query, function(err, rows)
+    {
+        if(rows!== undefined)
+        {
+            rows.forEach(function (row)
+            {
+                var msgInfo = {};
+                msgInfo.username = row.USERNAME;
+                msgInfo.message = row.MESSAGE;
+                msgInfo.datetime = row.DATETIME;
+                msgInfo.status=row.STATUS
+
+                // console.log("row name: "+ row.USERNAME+"message: "+ row.MESSAGE+"status:"+row.STATUS);
+                msgList.push(msgInfo);
+
+            });
+
+            callback(null, msgList);
+        }
+        if (err)
+            callback(err, null);
+    });
+    msgList = [];
+};
+
 //private msg history
 Message.getPrivateMsgs = function(messageType, callback)
 {
@@ -81,6 +114,37 @@ Message.getPrivateMsgs = function(messageType, callback)
       callback(err, null);
   });
   msgList = [];
+};
+
+Message.searchPrivateMsgs = function(keyword, callback)
+{
+    var msgList = [];
+    console.log("searchPrivateMsgs with keyword: " + keyword );
+
+    var query;
+    query = 'SELECT SENDERUSERNAME, RECEIVERUSERNAME, MESSAGE, DATETIME , STATUS FROM USERPRIVATEMESSAGEHISTORY WHERE MESSAGE LIKE "%'+keyword+'%"' ;
+    console.log("searchpriMsg....querying is :"+query);
+    db.all(query, function(err, rows)
+    {
+        if(rows!== undefined)
+        {
+            rows.forEach(function (row)
+            {
+                var msgInfo = {};
+                msgInfo.username = row.SENDERUSERNAME;
+                msgInfo.receiver = row.RECEIVERUSERNAME;
+                msgInfo.message = row.MESSAGE;
+                msgInfo.datetime = row.DATETIME;
+                msgInfo.status = row.STATUS;
+                // console.log("row name: "+ row.USERNAME+"message: "+ row.MESSAGE+"status:"+row.STATUS);
+                msgList.push(msgInfo);
+            });
+            callback(null, msgList);
+        }
+        if (err)
+            callback(err, null);
+    });
+    msgList = [];
 };
 
 
